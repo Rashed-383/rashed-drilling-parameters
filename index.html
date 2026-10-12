@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drilling Engineering Assistant</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--card:#142238;--line:#30435c;--blue:#38bdf8;--text:#edf4ff;--muted:#a9bad0;--green:#34d399;--red:#fb7185}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px Arial;line-height:1.6}
+main{max-width:1100px;margin:auto;padding:14px}
+header,.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h1{font-size:25px;margin:0}h2{font-size:19px}
+.muted{color:var(--muted);font-size:13px}
+.notice{padding:12px;background:#392e15;border:1px solid #82621a;border-radius:8px}
+nav{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}
+button{cursor:pointer;padding:10px 13px;border:0;border-radius:8px;background:var(--blue);color:#071522;font-weight:bold}
+nav button,.secondary{background:#293c55;color:white}
+nav button.active{background:var(--blue);color:#071522}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px;background:#0b1220;color:white;border:1px solid var(--line);border-radius:7px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.metric,.step{padding:12px;background:#0b1220;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.metric small{display:block;color:var(--muted)}
+.metric strong{font-size:21px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:650px}
+th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#20344d}
+.step label{display:flex;gap:9px;color:var(--text)}
+.step input{width:auto;margin-top:5px}
+.good{color:var(--green)}.bad{color:var(--red)}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Drilling Engineering Assistant</h1>
+<p class="muted">Drilling Optimization | Hydraulics | Liner Casing Job</p>
+<div class="notice">
+<b>SAFETY NOTICE</b><br>
+This application provides engineering calculations and comparison tools. It does not generate universally safe drilling limits. Use the approved well program, verified hydraulics model and equipment-specific OEM procedures.
+</div>
+</header>
+
+<nav>
+<button class="active" data-tab="setup">Well Setup</button>
+<button data-tab="ranges">Parameter Ranges</button>
+<button data-tab="liner">Liner Job</button>
+<button data-tab="references">Formulas</button>
+</nav>
+
+<section id="setup" class="panel active">
+<div class="card">
+<h2>1. Well and Formation Data</h2>
+<div class="grid">
+<div><label>Well Type</label><select id="well"><option>Vertical</option><option>Deviated</option><option>Horizontal</option></select></div>
+<div><label>Inclination (degrees)</label><select id="inc"><option>0</option><option>10</option><option>20</option><option>30</option><option>40</option><option>50</option><option>60</option><option>70</option><option>80</option><option>89</option></select></div>
+<div><label>Formation</label><select id="formation"><option>Sandstone</option><option>Shale</option><option>Limestone</option><option>Dolomite</option><option>Chalk</option><option>Salt</option><option>Conglomerate</option><option>Unconsolidated</option><option>Interbedded</option><option>Hard / Abrasive</option><option>Other / Unknown</option></select></div>
+<div><label>Hole Size (in)</label><select id="hole"><option>36</option><option>26</option><option selected>17.5</option><option>16</option><option>14.75</option><option>12.25</option><option>10.625</option><option>9.875</option><option>8.5</option><option>8.375</option><option>6.125</option><option value="custom">Custom</option></select></div>
+<div id="customBox" hidden><label>Custom Hole Size (in)</label><input id="customHole" type="number" min=".1" step=".001"></div>
+<div><label>Pipe / BHA OD (in)</label><input id="pipe" type="number" value="5" min=".1" step=".001"></div>
+<div><label>Bit Type</label><select id="bit"><option>PDC</option><option>Roller Cone</option><option>Other</option></select></div>
+<div><label>BHA Type</label><select id="bha"><option>Rotary</option><option>Mud Motor</option><option>RSS</option><option>Other</option></select></div>
+<div><label>MD (m)</label><input id="md" type="number" value="3000" min="0"></div>
+<div><label>TVD (m)</label><input id="tvd" type="number" value="2800" min="0"></div>
+<div><label>Mud Weight (PPG)</label><input id="mw" type="number" value="10" min=".1" step=".1"></div>
+<div><label>Flow Rate (GPM)</label><input id="flow" type="number" value="500" min="0"></div>
+<div><label>Annular Pressure Loss (PSI)</label><input id="apl" type="number" value="0" min="0"></div>
+</div>
+<div class="actions"><button id="calculate">Calculate</button><button class="secondary" id="reset">Reset</button></div>
+<p id="error" class="muted"></p>
+</div>
+
+<div class="card">
+<h2>2. Calculated Hydraulics</h2>
+<div class="metrics">
+<div class="metric"><small>Annular Capacity</small><strong id="cap">—</strong><small>bbl/m</small></div>
+<div class="metric"><small>Annular Volume / 100 m</small><strong id="vol">—</strong><small>bbl</small></div>
+<div class="metric"><small>Ideal Annular Velocity</small><strong id="av">—</strong><small>m/min</small></div>
+<div class="metric"><small>Hydrostatic Pressure</small><strong id="hyd">—</strong><small>PSI</small></div>
+<div class="metric"><small>Estimated ECD</small><strong id="ecd">—</strong><small>PPG</small></div>
+</div>
+<p class="muted">Assumes a circular gauge hole and concentric pipe. ECD uses the user-entered annular pressure loss at the selected TVD. Validate this value with a proper hydraulics model.</p>
+</div>
+
+<div class="card">
+<h2>3. Engineering Review</h2>
+<div class="tablewrap"><table>
+<tr><th>Parameter</th><th>Factors affecting it</th><th>Required verification</th></tr>
+<tr><td>WOB</td><td>Formation strength, bit, BHA, vibration</td><td>Bit/BHA limits and approved program</td></tr>
+<tr><td>ROP</td><td>WOB, RPM, formation, bit condition</td><td>Performance trend and hole cleaning</td></tr>
+<tr><td>Torque & Drag</td><td>Trajectory, friction, hole condition</td><td>Validated torque/drag model and rig limits</td></tr>
+<tr><td>RPM</td><td>Bit, BHA, motor/RSS and vibration</td><td>Tool limits and motor RPM where applicable</td></tr>
+<tr><td>Flow Rate</td><td>Hole cleaning, hydraulics and ECD</td><td>Pump, formation and tool limits</td></tr>
+<tr><td>SPP</td><td>Flow, mud, BHA and bit nozzles</td><td>Hydraulics model and pressure ratings</td></tr>
+<tr><td>ECD</td><td>Mud density and annular pressure loss</td><td>Pore/fracture pressure window</td></tr>
+</table></div>
+</div>
+</section>
+
+<section id="ranges" class="panel">
+<div class="card">
+<h2>Approved Operating Ranges</h2>
+<p class="muted">Enter limits from your approved drilling program. The application compares actual readings against these limits; it does not invent optimum values.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Parameter</th><th>Unit</th><th>Min</th><th>Max</th><th>Actual</th></tr></thead>
+<tbody id="rangeRows"></tbody>
+</table></div>
+<div class="actions"><button id="compare">Compare Values</button><button class="secondary" id="clearRanges">Clear</button></div>
+<div id="rangeResult"></div>
+</div>
+</section>
+
+<section id="liner" class="panel">
+<div class="card">
+<h2>Liner Casing Job — Step-by-Step</h2>
+<div class="grid">
+<div><label>Hanger System</label><select id="hanger"><option>Hydraulic Set</option><option>Mechanical Set</option><option>Rotational / High Torque</option><option>Other OEM System</option></select></div>
+<div><label>Job Type</label><select id="job"><option value="cemented">Cemented Liner</option><option value="uncemented">Uncemented Liner</option><option value="tieback">Tieback</option></select></div>
+</div>
+<div class="actions"><button id="loadLiner">Load Checklist</button><button class="secondary" id="clearChecks">Clear Checks</button></div>
+<div id="linerSteps"></div>
+<p id="progress" class="muted"></p>
+</div>
+</section>
+
+<section id="references" class="panel">
+<div class="card">
+<h2>Engineering Formulas</h2>
+<p><b>Annular capacity (bbl/ft)</b></p>
+<p>(Hole diameter² − Pipe OD²) / 1029.4</p>
+<p><b>Annular capacity (bbl/m)</b></p>
+<p>Capacity (bbl/ft) × 3.28084</p>
+<p><b>Annular velocity (ft/min)</b></p>
+<p>24.51 × Flow Rate (GPM) / (Hole² − Pipe OD²)</p>
+<p><b>Hydrostatic pressure (PSI)</b></p>
+<p>0.052 × Mud Weight (PPG) × TVD (ft)</p>
+<p><b>ECD (PPG)</b></p>
+<p>MW + Annular Pressure Loss / (0.052 × TVD in ft)</p>
+<p class="muted">These simplified equations do not calculate full SPP, torque/drag, surge/swab, kick tolerance or cuttings transport.</p>
+<h3>References</h3>
+<p><a href="https://glossary.slb.com/" target="_blank" rel="noopener">SLB Oilfield Glossary</a></p>
+<p><a href="https://www.iwcf.org/" target="_blank" rel="noopener">IWCF</a></p>
+<p><a href="https://www.iadc.org/" target="_blank" rel="noopener">IADC</a></p>
+</div>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");$(b.dataset.tab).classList.add("active");
+});
+$("hole").onchange=()=>{$("customBox").hidden=$("hole").value!=="custom"};
+const num=id=>Number($(id).value);
+const fmt=(x,d=2)=>Number.isFinite(x)?x.toLocaleString("en-US",{maximumFractionDigits:d}):"—";
+
+function calculate(){
+ const dh=$("hole").value==="custom"?num("customHole"):num("hole");
+ const dp=num("pipe"),q=num("flow"),mw=num("mw"),tvd=num("tvd"),md=num("md"),apl=num("apl");
+ if(![dh,dp,q,mw,tvd,md,apl].every(Number.isFinite)||dh<=dp||dp<=0||q<0||mw<=0||tvd<=0||md<tvd||apl<0){
+  $("error").textContent="Invalid input. Check hole/pipe diameters, depths and pressure-loss value.";return;
+ }
+ const diff=dh*dh-dp*dp,cap=diff/1029.4*3.28084,tvdft=tvd*3.28084;
+ $("cap").textContent=fmt(cap,4);
+ $("vol").textContent=fmt(cap*100);
+ $("av").textContent=fmt((24.51*q/diff)/3.28084);
+ $("hyd").textContent=fmt(.052*mw*tvdft,1);
+ $("ecd").textContent=fmt(mw+apl/(.052*tvdft),3);
+ $("error").textContent="Calculated estimates only. Verify hydraulics and approved operating limits.";
+}
+$("calculate").onclick=calculate;
+$("reset").onclick=()=>{
+ $("well").value="Vertical";$("inc").value="0";$("formation").value="Sandstone";
+ $("hole").value="17.5";$("customHole").value="";$("customBox").hidden=true;
+ $("pipe").value="5";$("md").value="3000";$("tvd").value="2800";
+ $("mw").value="10";$("flow").value="500";$("apl").value="0";calculate();
+};
+calculate();
+
+const params=[
+["WOB","klbf"],["ROP","m/hr"],["Torque","rig units"],
+["Drag","rig units"],["RPM","rpm"],["Flow Rate","GPM"],
+["SPP","PSI"],["ECD","PPG"]
+];
+$("rangeRows").innerHTML=params.map((p,i)=>`<tr>
+<td>${p[0]}</td><td>${p[1]}</td>
+<td><input id="lo${i}" type="number" step="any"></td>
+<td><input id="hi${i}" type="number" step="any"></td>
+<td><input id="cur${i}" type="number" step="any"></td></tr>`).join("");
+$("compare").onclick=()=>{
+ let html="<div class='tablewrap'><table><tr><th>Parameter</th><th>Approved Range</th><th>Actual</th><th>Status</th></tr>";
+ params.forEach((p,i)=>{
+  const a=$("lo"+i).value,b=$("hi"+i).value,c=$("cur"+i).value;
+  let status="Incomplete";
+  if(a!==""&&b!==""&&c!==""&&Number(a)<=Number(b)){
+   status=Number(c)<Number(a)?"Below minimum":Number(c)>Number(b)?"Above maximum":"Within entered range";
+  }else if(a!==""&&b!==""&&Number(a)>Number(b))status="Invalid range";
+  html+=`<tr><td>${p[0]}</td><td>${a!==""&&b!==""?a+" – "+b+" "+p[1]:"Not entered"}</td><td>${c||"—"}</td><td>${status}</td></tr>`;
+ });
+ $("rangeResult").innerHTML=html+"</table></div><p class='muted'>Comparison only; being within a range does not prove safe or optimum operation.</p>";
+};
+$("clearRanges").onclick=()=>{
+ document.querySelectorAll("#rangeRows input").forEach(x=>x.value="");
+ $("rangeResult").innerHTML="";
+};
+
+const common=[
+["Pre-job meeting","Review responsibilities, communication, barriers, lifting plan and stop-work criteria."],
+["Review approved program","Verify liner schematic, target depth, hanger model, running tool, cement plan and contingency procedures."],
+["Inspect and tally liner","Confirm grade, connections, tally, drift, accessories and equipment certification."],
+["Make up liner assembly","Install shoe, float equipment, centralizers and accessories according to the approved tally."],
+["Check running tool","Verify model compatibility, seals, connections, release system and documented limits."],
+["RIH with liner","Follow approved running speed, fill-up and circulation procedures; monitor well conditions."],
+["Monitor running operation","Record depth, hookload, torque, fill volumes and circulation response. Investigate anomalies."],
+["Reach planned depth","Verify tally and depth correlation; condition the hole according to the approved program."]
+];
+const hangerSteps={
+"Hydraulic Set":[
+["Set hydraulic hanger","Follow the exact OEM setting sequence and pressure criteria. Never assume a universal setting pressure."],
+["Verify hanger setting","Use the OEM-prescribed verification and load-transfer procedure."]
+],
+"Mechanical Set":[
+["Set mechanical hanger","Follow the exact model-specific setting procedure; do not assume universal rotation or set-down weight."],
+["Verify hanger setting","Confirm the OEM-defined setting indicators and load-transfer criteria."]
+],
+"Rotational / High Torque":[
+["Set rotational hanger","Follow the model-specific OEM rotation, torque and load sequence."],
+["Verify hanger setting","Use the prescribed verification method and approved limits."]
+],
+"Other OEM System":[
+["Set hanger","Use the exact system-specific OEM manual and approved sequence."],
+["Verify setting","Complete the prescribed verification and load-transfer checks."]
+]
+};
+function loadLiner(){
+ const j=$("job").value;
+ let list=[...common,...hangerSteps[$("hanger").value]];
+ if(j==="cemented")list.push(
+ ["Prepare cement job","Verify slurry design, volumes, spacer compatibility, displacement calculations, float equipment and pressure limits."],
+ ["Pump cement and displace","Execute the approved cement program while monitoring pressures, volumes and returns."],
+ ["Verify cement job","Compare actual pumped and returned volumes with the program; document deviations and contingencies."]
+ );
+ if(j==="uncemented")list.push(
+ ["Verify uncemented design","Confirm the specified isolation, sealing method and hanger arrangement."]
+ );
+ if(j==="tieback")list.push(
+ ["Prepare tieback","Verify tieback tally, seal assembly, receptacle condition and compatibility."]
+ );
+ list.push(
+ ["Release running tool","Perform the specified OEM release sequence and confirm the required indicators."],
+ ["Post-job verification","Record depth, pressures, volumes, setting/release indicators and unresolved issues."],
+ ["WOC / next operation","For cemented jobs, follow the approved waiting-on-cement and verification criteria."]
+ );
+ $("linerSteps").innerHTML=list.map((s,i)=>`<div class="step"><label><input type="checkbox" class="ck"><span><b>${i+1}. ${s[0]}</b><br>${s[1]}</span></label></div>`).join("");
+ document.querySelectorAll(".ck").forEach(c=>c.onchange=progress);
+ progress();
+}
+function progress(){
+ const a=[...document.querySelectorAll(".ck")];
+ $("progress").textContent="Completed: "+a.filter(x=>x.checked).length+" / "+a.length+" steps";
+}
+$("loadLiner").onclick=loadLiner;
+$("clearChecks").onclick=()=>{
+ document.querySelectorAll(".ck").forEach(x=>x.checked=false);progress();
+};
+loadLiner();
+</script>
+</body>
+</html>
